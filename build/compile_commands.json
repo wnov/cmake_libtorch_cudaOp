@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/wn/codes/tmp/cpp_make/build",
+  "command": "/usr/bin/g++    -g   -o CMakeFiles/cpp.dir/main_libtorch.cpp.o -c /home/wn/codes/tmp/cpp_make/main_libtorch.cpp",
+  "file": "/home/wn/codes/tmp/cpp_make/main_libtorch.cpp"
+}
+]

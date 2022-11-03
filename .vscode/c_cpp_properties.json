@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/home/wn/anaconda3/envs/py38/lib/python3.8/site-packages/torch/include/torch/csrc/api/include",
+                "/home/wn/anaconda3/envs/py38/lib/python3.8/site-packages/torch/include",
+                "/home/wn/anaconda3/include/python3.10",
+                "/usr/local/cuda-11.6/include",
+                "/usr/local/cuda/include"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "linux-gcc-x64",
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+    "version": 4
+}
