@@ -1,6 +1,0 @@
-/home/wn/codes/my_projects/cuda_matmul/build/CMakeFiles/rebuild_cache.dir
-/home/wn/codes/my_projects/cuda_matmul/build/CMakeFiles/matmul.dir
-/home/wn/codes/my_projects/cuda_matmul/build/CMakeFiles/edit_cache.dir
-/home/wn/codes/my_projects/cuda_matmul/build/src/CMakeFiles/rebuild_cache.dir
-/home/wn/codes/my_projects/cuda_matmul/build/src/CMakeFiles/matrix_multiply.dir
-/home/wn/codes/my_projects/cuda_matmul/build/src/CMakeFiles/edit_cache.dir

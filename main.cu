@@ -73,6 +73,7 @@ int main(int argc, char **argv) {
   CHECK(cudaMemcpy(mC, mCd, h * w * sizeof(float), cudaMemcpyDeviceToHost));
   checkResult(mCH, mC, h * w);
   // printMat(mC, h, w);
+  // printMat(mCH, h, w);
   printf("Task done!");
 
   CHECK(cudaFree(mAd));

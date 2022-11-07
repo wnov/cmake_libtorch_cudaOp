@@ -69,7 +69,7 @@ __global__ void matmul1(T *matA, T *matB, T *matC, size_t height, size_t width,
 // reinterpret_cast<float4 *>(&x)[0]
 // float4 提高内存带宽和单个线程计算强度
 template <typename T>
-__global__ void matmul2(T *matA, T *matBT, T *matC, size_t height, size_t width,
+__global__ void matmul2(T *matA, T *matB, T *matC, size_t height, size_t width,
                         size_t num) {
   __shared__ float blockA[blockSize][blockSize * 4],
       blockB[4 * blockSize][blockSize];
@@ -82,6 +82,8 @@ __global__ void matmul2(T *matA, T *matBT, T *matC, size_t height, size_t width,
     return;
   }
 
+  int offset_x = blockIdx.x * blockDim.x;
+  int offset_y = blockIdx.y * blockDim.y;
   int xA = tid_x << 2;
   int yA = tid_y;
   int xB = (tid_x << 2) % blockSize;
@@ -91,10 +93,10 @@ __global__ void matmul2(T *matA, T *matBT, T *matC, size_t height, size_t width,
   for (int i = 0; i < n_iter; i++) {
     if ((xA + i * blockSize * 4) < num)
       FETCH_FLOAT4(blockA[yA][xA]) =
-          FETCH_FLOAT4(matA[(xA + i * blockSize * 4) + (y_index + yA) * num]);
-    if ((tid_y + i * blockSize << 2) < num)
+          FETCH_FLOAT4(matA[(xA + i * blockSize * 4) + (offset_y + yA) * num]);
+    if ((yB + i * blockSize * 4) < num)
       FETCH_FLOAT4(blockB[yB][xB]) = FETCH_FLOAT4(
-          matBT[(xB + x_index) + (yB + i * blockSize * 4) * width]);
+          matB[(xB + offset_x) + (yB + i * blockSize * 4) * width]);
     __syncthreads();
 
 #pragma unroll
@@ -111,11 +113,9 @@ __global__ void matmul2(T *matA, T *matBT, T *matC, size_t height, size_t width,
 // __global__ void matmul3(T *matA, T *matB, T *matC, size_t height, size_t
 // width,
 //                         size_t num) {
-//   __shared__ float4 blockA[blockSize][blockSize],
-//       blockAPre[blockSize][blockSize], blockB[blockSize][blockSize],
-//       blockBPre[blockSize][blockSize];
-//   T *matBT;
-//   matTranspose(matB, matBT, num, width);
+//   __shared__ float blockA[blockSize][blockSize * 4],
+//       blockAPre[blockSize][blockSize * 4], blockB[blockSize * 4][blockSize],
+//       blockBPre[blockSize * 4][blockSize];
 //   size_t tid_x = threadIdx.x * 4, tid_y = threadIdx.y * 4;
 //   size_t x_index = (blockIdx.x * blockDim.x + threadIdx.x) * 4;
 //   size_t y_index = blockIdx.y * blockDim.y + threadIdx.y;
@@ -125,28 +125,51 @@ __global__ void matmul2(T *matA, T *matBT, T *matC, size_t height, size_t width,
 //     return;
 //   }
 
-//   blockAPre[tid_y][tid_x] = FETCH_FLOAT4(matA[y_index * num + tid_x]);
-//   blockBPre[tid_y][tid_x] = FETCH_FLOAT4(matBT[x_index * num + tid_y]);
+//   int offset_x = blockIdx.x * blockDim.x;
+//   int offset_y = blockIdx.y * blockDim.y;
+//   int xA = tid_x << 2;
+//   int yA = tid_y;
+//   int xB = (tid_x << 2) % blockSize;
+//   int yB = (tid_x << 2) / blockSize + (tid_y << 2);
+
+//   if (xA < num)
+//     FETCH_FLOAT4(blockAPre[yA][xA]) =
+//         FETCH_FLOAT4(matA[xA + (offset_y + yA) * num]);
+//   if (yB < num)
+//     FETCH_FLOAT4(blockBPre[yB][xB]) =
+//         FETCH_FLOAT4(matB[(xB + offset_x) + yB * width]);
+
+//   // blockAPre[tid_y][tid_x] = FETCH_FLOAT4(matA[y_index * num + tid_x]);
+//   // blockBPre[tid_y][tid_x] = FETCH_FLOAT4(matB[x_index * num + tid_y]);
 
 //   T res = 0.;
 // #pragma unroll
 //   for (int i = 1; i < n_iter; i++) {
-//     blockA[tid_y][tid_x] = blockAPre[tid_y][tid_x];
-//     blockB[tid_x][tid_y] = blockBPre[tid_y][tid_x];
+//     if ((xA + i * blockSize * 4) < num)
+//       FETCH_FLOAT4(blockA[yA][xA]) =
+//           FETCH_FLOAT4(matA[(xA + i * blockSize * 4) + (offset_y + yA) *
+//           num]);
+//     if ((yB + i * blockSize * 4) < num)
+//       FETCH_FLOAT4(blockB[yB][xB]) = FETCH_FLOAT4(
+//           matB[(xB + offset_x) + (yB + i * blockSize * 4) * width]);
 //     __syncthreads();
 
-//     blockAPre[tid_y][tid_x] =
+//     FETCH_FLOAT4(blockAPre[tid_y][tid_x]) =
 //         FETCH_FLOAT4(matA[y_index * num + (i * blockSize + tid_x)]);
-//     blockBPre[tid_x][tid_y] =
-//         FETCH_FLOAT4(matBT[x_index * num + (i * blockSize + tid_y)]);
+//     FETCH_FLOAT4(blockBPre[tid_x][tid_y]) =
+//         FETCH_FLOAT4(matB[x_index * num + (i * blockSize + tid_y)]);
 
 // #pragma unroll
-//     for (int j = 0; j < blockSize && i * blockSize * 4 + j * 4 < num; j++)
-//       res += blockA[tid_y][j].x * blockB[tid_x][j].x +
-//              blockA[tid_y][j].y * blockB[tid_x][j].y +
-//              blockA[tid_y][j].z * blockB[tid_x][j].z +
-//              blockA[tid_y][j].w * blockB[tid_x][j].w;
+//     for (int j = 0; j < blockSize * 4 && (i - 1) * blockSize * 4 + j < num;
+//     ++j)
+//       res += blockA[tid_y][j] * blockB[j][tid_x];
+//     __syncthreads();
 //   }
+
+//   for (int j = 0; j < blockSize * 4 && (n_iter - 1) * blockSize * 4 + j <
+//   num;
+//        ++j)
+//     res += blockA[tid_y][j] * blockB[j][tid_x];
 //   __syncthreads();
 //   matC[y_index * width + x_index] = res;
 // }
@@ -157,8 +180,8 @@ __global__ void matmul2(T *matA, T *matBT, T *matC, size_t height, size_t width,
 // width,
 //                         size_t num) {
 //   __shared__ float4 blockA[blockSize][blockSize],
-//   blockB[blockSize][blockSize]; float4 blockAPre, blockBPre; T *matBT;
-//   matTranspose(matB, matBT, num, width);
+//   blockB[blockSize][blockSize]; float4 blockAPre, blockBPre; T *matB;
+//   matTranspose(matB, matB, num, width);
 //   size_t tid_x = threadIdx.x * 4, tid_y = threadIdx.y * 4;
 //   size_t x_index = (blockIdx.x * blockDim.x + threadIdx.x) * 4;
 //   size_t y_index = blockIdx.y * blockDim.y + threadIdx.y;
@@ -169,7 +192,7 @@ __global__ void matmul2(T *matA, T *matBT, T *matC, size_t height, size_t width,
 //   }
 
 //   blockAPre = FETCH_FLOAT4(matA[y_index * num + tid_x]);
-//   blockBPre = FETCH_FLOAT4(matBT[x_index * num + tid_y]);
+//   blockBPre = FETCH_FLOAT4(matB[x_index * num + tid_y]);
 
 //   T res = 0.;
 // #pragma unroll
@@ -179,7 +202,7 @@ __global__ void matmul2(T *matA, T *matBT, T *matC, size_t height, size_t width,
 //     __syncthreads();
 
 //     blockAPre = FETCH_FLOAT4(matA[y_index * num + (i * blockSize + tid_x)]);
-//     blockBPre = FETCH_FLOAT4(matBT[x_index * num + (i * blockSize + tid_y)]);
+//     blockBPre = FETCH_FLOAT4(matB[x_index * num + (i * blockSize + tid_y)]);
 
 // #pragma unroll
 //     for (int j = 0; j < blockSize / 4 && i * blockSize * 4 + j * 4 < num;
@@ -207,11 +230,6 @@ void matmul(float *matA, float *matB, float *matC, size_t height, size_t width,
   dim3 block(blockSize, blockSize);
   dim3 grid((width - 1) / blockSize + 1, (height - 1) / blockSize + 1);
 
-  float *matBT = nullptr;
-  cudaMalloc((void **)&matBT, num * width * sizeof(float));
-  dim3 blockT(blockSize, blockSize);
-  dim3 gridT((width - 1) / blockSize + 1, (num - 1) / blockSize + 1);
-
   switch (nAlgo) {
     case 0:
       matmul0<float><<<grid, block>>>(matA, matB, matC, height, width, num);
@@ -220,8 +238,7 @@ void matmul(float *matA, float *matB, float *matC, size_t height, size_t width,
       matmul1<float><<<grid, block>>>(matA, matB, matC, height, width, num);
       break;
     case 2:
-      // matTranspose<<<gridT, blockT>>>(matB, matBT, num, width);
-      matmul2<float><<<grid, block>>>(matA, matBT, matC, height, width, num);
+      matmul2<float><<<grid, block>>>(matA, matB, matC, height, width, num);
       break;
       // case 3:
       //   matmul3<float><<<grid, block>>>(matA, matB, matC, height, width,
@@ -236,5 +253,4 @@ void matmul(float *matA, float *matB, float *matC, size_t height, size_t width,
     default:
       break;
   }
-  cudaFree(matBT);
 }
