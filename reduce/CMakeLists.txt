@@ -1,1 +1,0 @@
-cuda_add_executable(reduce main_reduce.cu paralell_reduce.cu)

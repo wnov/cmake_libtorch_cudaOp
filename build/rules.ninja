@@ -6,7 +6,7 @@
 # It is included in the main 'build.ninja'.
 
 # =============================================================================
-# Project: cpp
+# Project: matmul
 # Configuration: Debug
 # =============================================================================
 # =============================================================================
@@ -20,9 +20,47 @@ rule CUSTOM_COMMAND
 
 
 #############################################
+# Rule for compiling CUDA files.
+
+rule CUDA_COMPILER__matmul
+  depfile = $DEP_FILE
+  deps = gcc
+  command = /usr/local/cuda-11.8/bin/nvcc  $DEFINES $INCLUDES $FLAGS -x cu -c $in -o $out && /usr/local/cuda-11.8/bin/nvcc  $DEFINES $INCLUDES $FLAGS -x cu -M $in -MT $out -o $DEP_FILE
+  description = Building CUDA object $out
+
+
+#############################################
+# Rule for linking CXX executable.
+
+rule CXX_EXECUTABLE_DEVICE_LINKER__matmul
+  command = /usr/local/cuda-11.8/bin/nvcc  $FLAGS  -Xcompiler=-fPIC -Wno-deprecated-gpu-targets -shared -dlink $in -o $TARGET_FILE $LINK_LIBRARIES
+  description = Linking CXX executable $TARGET_FILE
+  restat = $RESTAT
+
+
+#############################################
+# Rule for linking CXX executable.
+
+rule CXX_EXECUTABLE_LINKER__matmul
+  command = $PRE_LINK && /usr/bin/g++  $FLAGS  $LINK_FLAGS $in  -o $TARGET_FILE $LINK_PATH $LINK_LIBRARIES && $POST_BUILD
+  description = Linking CXX executable $TARGET_FILE
+  restat = $RESTAT
+
+
+#############################################
+# Rule for compiling CUDA files.
+
+rule CUDA_COMPILER__matrix_multiply
+  depfile = $DEP_FILE
+  deps = gcc
+  command = /usr/local/cuda-11.8/bin/nvcc  $DEFINES $INCLUDES $FLAGS -x cu -c $in -o $out && /usr/local/cuda-11.8/bin/nvcc  $DEFINES $INCLUDES $FLAGS -x cu -M $in -MT $out -o $DEP_FILE
+  description = Building CUDA object $out
+
+
+#############################################
 # Rule for compiling CXX files.
 
-rule CXX_COMPILER__cpp
+rule CXX_COMPILER__matrix_multiply
   depfile = $DEP_FILE
   deps = gcc
   command = /usr/bin/g++  $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
@@ -30,11 +68,11 @@ rule CXX_COMPILER__cpp
 
 
 #############################################
-# Rule for linking CXX executable.
+# Rule for linking CXX static library.
 
-rule CXX_EXECUTABLE_LINKER__cpp
-  command = $PRE_LINK && /usr/bin/g++  $FLAGS  $LINK_FLAGS $in  -o $TARGET_FILE $LINK_PATH $LINK_LIBRARIES && $POST_BUILD
-  description = Linking CXX executable $TARGET_FILE
+rule CXX_STATIC_LIBRARY_LINKER__matrix_multiply
+  command = $PRE_LINK && /usr/bin/cmake -E remove $TARGET_FILE && /usr/bin/ar qc $TARGET_FILE $LINK_FLAGS $in && /usr/bin/ranlib $TARGET_FILE && $POST_BUILD
+  description = Linking CXX static library $TARGET_FILE
   restat = $RESTAT
 
 
@@ -42,7 +80,7 @@ rule CXX_EXECUTABLE_LINKER__cpp
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = /usr/bin/cmake -H/home/wn/codes/tmp/cpp_make -B/home/wn/codes/tmp/cpp_make/build
+  command = /usr/bin/cmake -H/home/wn/codes/my_projects/cuda_matmul -B/home/wn/codes/my_projects/cuda_matmul/build
   description = Re-running CMake...
   generator = 1
 

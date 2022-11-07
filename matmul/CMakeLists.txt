@@ -1,1 +1,0 @@
-cuda_add_executable(matmul main_matmul.cu matrix_multiply.cu matmul_cublas.cu)
