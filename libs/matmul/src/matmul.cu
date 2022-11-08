@@ -2,6 +2,7 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 
+#include "helper/include/utils.h"
 #include "matmul.cuh"
 
 template <typename T>
@@ -65,7 +66,6 @@ __global__ void matmul1(T *matA, T *matB, T *matC, size_t height, size_t width,
   matC[y_index * width + x_index] = res;
 }
 
-#define FETCH_FLOAT4(x) *reinterpret_cast<float4 *>(&x)
 // reinterpret_cast<float4 *>(&x)[0]
 // float4 提高内存带宽和单个线程计算强度
 template <typename T>

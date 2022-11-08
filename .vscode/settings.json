@@ -69,7 +69,8 @@
         "set": "cpp",
         "string": "cpp",
         "__nullptr": "cpp",
-        "__locale": "cpp"
+        "__locale": "cpp",
+        "ios": "cpp"
     },
-    "cmake.sourceDirectory": "${workspaceFolder}/cuda_matmul"
+    "cmake.sourceDirectory": "${workspaceFolder}/."
 }

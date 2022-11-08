@@ -2,22 +2,8 @@
 
 #include <string>
 
-#include "matmul.cuh"
-
-void initialData(float *ip, int size) {
-  time_t t;
-  srand((unsigned)time(&t));
-  for (int i = 0; i < size; i++) {
-    ip[i] = (float)(rand() & 0xffff) / 1000.0f;
-  }
-}
-void initialData_int(int *ip, int size) {
-  time_t t;
-  srand((unsigned)time(&t));
-  for (int i = 0; i < size; i++) {
-    ip[i] = int(rand() & 0xff);
-  }
-}
+#include "helper/include/utils.h"
+#include "matmul/include/matmul.cuh"
 
 int main(int argc, char **argv) {
   int nAlgo = 2, h = 4, w = 4, k = 4;

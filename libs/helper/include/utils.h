@@ -1,7 +1,5 @@
-#ifndef __MATMUL_H__
-#define __MATMUL_H__
-
-#include <cuda_runtime.h>
+#ifndef __UTILS_H__
+#define __UTILS_H__
 
 #define CHECK(error)                                                    \
   {                                                                     \
@@ -11,21 +9,12 @@
     }                                                                   \
   }
 
-template <typename T>
-__host__ __device__ void printMat(T *mat, size_t h, size_t w) {
-  for (int i = 0; i < h; ++i) {
-    for (int j = 0; j < h; ++j) {
-      printf("%.2f, ", mat[i * w + j]);
-    }
-    printf("\n");
-  }
-}
+#define FETCH_FLOAT4(x) *reinterpret_cast<float4 *>(&x)
 
-constexpr int blockSize = 32;
-extern "C" {}
-void matmul(float *matA, float *matB, float *matC, size_t height, size_t width,
-            size_t num, int nAlgo);
+template <typename T>
+void printMat(T *mat, int h, int w);
 void matmul_cpu(float *A, float *B, float *C, int m, int n, int k);
 void checkResult(float *hostRef, float *gpuRef, const int N);
+void initialData(float *ip, int size);
 
 #endif  //__MATMUL_H__
