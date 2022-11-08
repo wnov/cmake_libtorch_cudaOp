@@ -20,7 +20,7 @@ void initialData_int(int *ip, int size) {
 }
 
 int main(int argc, char **argv) {
-  int nAlgo = 0, h = 1024, w = 128, k = 256;
+  int nAlgo = 2, h = 4, w = 4, k = 4;
   if (argc > 1) {
     nAlgo = std::stoi(argv[1]);
   }
